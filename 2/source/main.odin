@@ -42,7 +42,18 @@ Immediate :: struct {
 Calculated_Address :: struct {
     reg1: Register,
     reg2: Register,
-    disp: i16,
+    disp: i32,
+}
+
+calculated_address :: proc(reg1, reg2: Register, disp: i16) -> Calculated_Address {
+    result: Calculated_Address
+    result.disp = i32(disp)
+    if reg1 == .None && reg2 == .None {
+	result.disp = i32(transmute(u16)disp)
+    }
+    result.reg1 = reg1
+    result.reg2 = reg2
+    return result
 }
 
 Operand :: union {
@@ -122,11 +133,7 @@ decode :: proc(bytes: ^[]byte) -> (result: Instruction, ok: bool) {
 	    case 0b111: reg1 = .bx
 	    }
 
-	    b = Calculated_Address {
-		reg1 = reg1,
-		reg2 = reg2,
-		disp = disp
-	    }
+	    b = calculated_address(reg1, reg2, disp)
 	}
 
 	if a_type == Register {
@@ -166,15 +173,11 @@ decode :: proc(bytes: ^[]byte) -> (result: Instruction, ok: bool) {
     } else if instruction_byte >> 1 == 0b1010000 {
 	result.opcode = .mov
 	result.dest = .ax
-	result.source = Calculated_Address {
-	    disp = eat_immediate_value(bytes, 2) or_return
-	}
+	result.source = calculated_address(.None, .None, eat_immediate_value(bytes, 2) or_return)
     } else if instruction_byte >> 1 == 0b1010001 {
 	result.opcode = .mov
 	result.source = .ax
-	result.dest = Calculated_Address {
-	    disp = eat_immediate_value(bytes, 2) or_return
-	}
+	result.dest = calculated_address(.None, .None, eat_immediate_value(bytes, 2) or_return)
     }
 
     
