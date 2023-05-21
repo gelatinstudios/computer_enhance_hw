@@ -1,3 +1,6 @@
 *.exe
 output*
 listing*
+build/*
+input/*
+output/*

@@ -4,16 +4,23 @@ package hw_1
 import "core:fmt"
 import "core:os"
 
-import "../../util"
+eat_byte :: proc (bytes: ^[]byte) -> (byte, bool) {
+	if len(bytes^) == 0 do return 0, false
+	
+	result := bytes[0]
+	bytes^ = bytes[1:]
+	return result, true
+}
 
 main :: proc() {
     bytes, ok := os.read_entire_file(os.args[1])
+	assert(ok)
     
     fmt.println("bits 16")
     fmt.println(";", os.args[1])
 
     for len(bytes) > 0 {
-	instruction_byte, _ := util.eat_byte(&bytes)
+	instruction_byte, _ := eat_byte(&bytes)
 	
 	opcode := instruction_byte >> 2
 	assert(opcode == 0b100010) // we're only dealing with mov's
@@ -21,7 +28,7 @@ main :: proc() {
 	d := (instruction_byte >> 1) & 1
 	w := (instruction_byte >> 0) & 1
 
-	operand_byte, ok := util.eat_byte(&bytes)
+	operand_byte, ok := eat_byte(&bytes)
 	assert(ok)
 
 	mod := (operand_byte >> 6) & 0b11
